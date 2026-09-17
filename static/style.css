@@ -341,3 +341,10 @@ textarea:focus, select:focus { border-color: var(--indigo); outline: 3px solid r
     .compact-sheet-form label { width: 100%; }
     .compact-sheet-form select { flex: 1; min-width: 0; }
 }
+@media (max-width: 480px) {
+    .result-header h1 { font-size: clamp(1.65rem, 7.7vw, 2rem); line-height: 1.08; }
+    .workbook-meta > div { padding: 14px; }
+    .answer-panel, .continue-panel, .data-section, .detail-panel, .cross-sheet-panel, .sheet-explorer, .history-section { border-radius: 11px; }
+    .answer-panel, .continue-panel, .detail-panel { padding: 22px 17px; }
+    .data-section, .sheet-explorer, .history-section { padding: 20px 15px; }
+}

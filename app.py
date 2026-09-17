@@ -318,7 +318,8 @@ def upload_file():
                                 numeric_sums=numeric_sums,
                                 table_html=table_html,
                                 current_sheet=specific_sheet,
-                                trend_summary=trend_summary,  # Add this line
+                                error_report=error_report,
+                                trend_summary=trend_summary,
                                 qa_history=session['qa_history'])
            
         elif len(sheet_names) > 1 and analyze_all_sheets:
@@ -425,6 +426,8 @@ def upload_file():
                                 numeric_sums=numeric_sums,
                                 table_html=table_html,
                                 current_sheet=sheet_names[0],
+                                error_report=error_report,
+                                trend_summary=trend_summary,
                                 qa_history=session['qa_history'])
 
 
@@ -480,7 +483,8 @@ def switch_sheet():
                             numeric_sums=df.select_dtypes(include='number').sum().to_dict() if not df.empty else {},
                             table_html=df.head(5).to_html(index=False, classes='data-table'),
                             current_sheet=selected_sheet,
-                            trend_summary=compute_trends(df),  # Add this line
+                            error_report=file_data['error_report'],
+                            trend_summary=file_data['trend_summary'],
                             qa_history=session.get('qa_history', []))
    
     except Exception as e:
@@ -557,6 +561,8 @@ def ask_another():
                                 numeric_sums=df.select_dtypes(include='number').sum().to_dict() if not df.empty else {},
                                 table_html=df.head(5).to_html(index=False, classes='data-table'),
                                 current_sheet=specific_sheet,
+                                error_report=error_report,
+                                trend_summary=trend_summary,
                                 qa_history=session['qa_history'])
         elif file_data.get('multi_sheet', False) or any(kw in user_question.lower() for kw in ['all sheets', 'across sheets', 'multiple sheets']):
             logger.info("Performing full multi-sheet analysis")
@@ -650,7 +656,8 @@ def ask_another():
                                 numeric_sums=df.select_dtypes(include='number').sum().to_dict() if not df.empty else {},
                                 table_html=df.head(5).to_html(index=False, classes='data-table'),
                                 current_sheet=current_sheet,
-                                trend_summary=trend_summary,  # Add this line
+                                error_report=error_report,
+                                trend_summary=trend_summary,
                                 qa_history=session['qa_history'])
 
 
@@ -689,6 +696,8 @@ def result():
                             numeric_sums=file_data['numeric_sums'],
                             table_html=file_data['table_html'],
                             current_sheet=file_data.get('current_sheet', file_data['sheet_names'][0]),
+                            error_report=file_data.get('error_report', 'No error report is available for this view.'),
+                            trend_summary=file_data.get('trend_summary', 'No trend summary is available for this view.'),
                             qa_history=qa_history)
 
 
