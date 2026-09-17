@@ -1,152 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel AI Analyzer</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
-    <div class="layout">
-        <!-- Sidebar with white container -->
-        <div class="sidebar">
-            <div class="sidebar-logo">
-                <img src="{{ url_for('static', filename='docu.avif') }}" alt="Excel AI Analyzer Logo">
-            </div>
-           
-            <div class="sidebar-header">
-                <h2>Chat History</h2>
-                <div class="sidebar-actions">
-                    <button class="sidebar-action-btn" title="Refresh">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                    <button class="sidebar-action-btn" title="Settings">
-                        <i class="fas fa-cog"></i>
-                    </button>
-                </div>
-            </div>
-           
-            <button class="new-chat">
-                <i class="fas fa-plus"></i> New Chat
-            </button>
-           
-            <div class="chat-list">
-                <!-- Chat items -->
-                <div class="chat-item">
-                    <i class="fas fa-file-excel chat-item-icon"></i>
-                    Sales Data Analysis
-                </div>
-                <div class="chat-item">
-                    <i class="fas fa-file-excel chat-item-icon"></i>
-                    Marketing Report Q3
-                </div>
-                <div class="chat-item">
-                    <i class="fas fa-file-excel chat-item-icon"></i>
-                    Customer Feedback
-                </div>
-                <div class="chat-item">
-                    <i class="fas fa-file-excel chat-item-icon"></i>
-                    Financial Projections
-                </div>
-                <!-- More chat items can be added here -->
-            </div>
+{% extends "base.html" %}
+
+{% block title %}ModelMind · Ask questions about your workbook{% endblock %}
+
+{% block content %}
+<section class="hero" aria-labelledby="hero-title">
+    <div class="hero__copy">
+        <span class="eyebrow">Excel analysis, guided by your question</span>
+        <h1 id="hero-title">Turn a workbook into a clear conversation.</h1>
+        <p class="hero__lead">Upload an Excel file, point ModelMind at the question that matters, and review a structured answer alongside the source data.</p>
+        <div class="capability-list" aria-label="Analysis capabilities">
+            <span>Multi-sheet context</span>
+            <span>Formula checks</span>
+            <span>Trend summaries</span>
         </div>
-
-
-        <div class="main">
-            <div class="nav">
-                <div class="nav-left">
-                    <button class="nav-icon-btn" title="Menu">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <div class="nav-title">Excel AI Analyzer</div>
-                </div>
-               
-                <ul class="options">
-                    <li><i class="fas fa-home"></i> Home</li>
-                    <li><i class="fas fa-info-circle"></i> About</li>
-                    <li><i class="fas fa-book"></i> Documentation</li>
-                    <li><i class="fas fa-envelope"></i> Contact</li>
-                    <li><i class="fas fa-star"></i> Premium</li>
-                </ul>
-               
-                <div class="nav-right">
-                    <button class="navbutton">Sign Up</button>
-                </div>
+    </div>
+    <div class="hero__visual" aria-label="Workbook analysis workflow">
+        <div class="workbook-illustration" aria-hidden="true">
+            <div class="sheet sheet--back"></div>
+            <div class="sheet sheet--front">
+                <span></span><span></span><span></span>
+                <span></span><span></span><span></span>
+                <span></span><span></span><span></span>
             </div>
-
-
-            <div class="container">
-                <div class="text">
-                    <h1 class="head">Excel AI Analyzer</h1>
-                    <p class="small">Upload your Excel file and ask questions about your data</p>
-                </div>
-               
-                <div class="instructions">
-                    <p>Our AI will analyze and provide insights about your Excel data.</p>
-                </div>
-
-
-                <div class="flash-messages">
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="flash-message flash-{{ category }}">{{ message }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-                </div>
-
-
-                <form action="/upload" method="POST" enctype="multipart/form-data" class="form">
-                    <div class="form_form">
-                        <div class="form-group">
-                            <label for="excel_file" id="file-label">Excel File (.xls or .xlsx)</label>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="excel_file" name="excel_file" accept=".xls,.xlsx" aria-labelledby="file-label" required>
-                                <label for="excel_file" class="file-input-label input" tabindex="0">
-                                    <img src="{{ url_for('static', filename='upload.jpg') }}" alt="Upload icon">
-                                    <span>Choose a file or drag it here</span>
-                                </label>
-                            </div>
-                            <div id="file-name" class="file-name">No file selected</div>
-                        </div>
-
-
-                        <div class="form-group">
-                            <label for="user_question">Your Question</label>
-                            <textarea id="user_question" name="user_question"
-                                    placeholder="E.g., What are the key trends in this data? Are there any errors in the formulas?"
-                                    aria-label="Enter your question about the Excel data" required></textarea>
-                        </div>
-
-
-                        <div class="button">
-                            <button type="submit" aria-label="Submit your question and file for analysis">Analyze Excel</button>
-                        </div>
-                    </div>
-                </form>
+            <div class="insight-card">
+                <span class="insight-card__dot"></span>
+                <span></span><span></span><span></span>
             </div>
         </div>
     </div>
+</section>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <section class="flash-stack" aria-live="polite" aria-label="Notifications">
+        {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </section>
+    {% endif %}
+{% endwith %}
 
-    <script>
-        // Display selected file name
-        document.getElementById('excel_file').addEventListener('change', function(e) {
-            const fileName = e.target.files[0] ? e.target.files[0].name : 'No file selected';
-            document.getElementById('file-name').textContent = fileName;
-        });
+<section class="analysis-workspace" aria-labelledby="workspace-title">
+    <div class="workflow-guide">
+        <span class="eyebrow">Three-step workflow</span>
+        <h2 id="workspace-title">Start an analysis</h2>
+        <ol class="workflow-steps">
+            <li>
+                <span>01</span>
+                <div><strong>Add a workbook</strong><p>Choose an .xls or .xlsx file up to 16 MB.</p></div>
+            </li>
+            <li>
+                <span>02</span>
+                <div><strong>Ask precisely</strong><p>Name a sheet or ask for an across-sheet comparison.</p></div>
+            </li>
+            <li>
+                <span>03</span>
+                <div><strong>Review the evidence</strong><p>Read the answer beside previews, checks, and summaries.</p></div>
+            </li>
+        </ol>
+        <p class="privacy-note"><strong>Before uploading:</strong> remove confidential or personally identifiable information you do not intend to process.</p>
+    </div>
 
+    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" class="analysis-form" data-analysis-form>
+        <div class="form-heading">
+            <div>
+                <span class="step-label">Step 1</span>
+                <h3>Select your workbook</h3>
+            </div>
+            <span class="file-limit">XLS · XLSX · 16 MB</span>
+        </div>
 
-        // Accessibility - make file input label work with keyboard
-        document.querySelector('.file-input-label').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                document.getElementById('excel_file').click();
-            }
-        });
-    </script>
-</body>
-</html>
+        <label class="drop-zone" for="excel_file" data-drop-zone>
+            <input type="file" id="excel_file" name="excel_file" accept=".xls,.xlsx" required data-file-input>
+            <span class="drop-zone__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <strong data-file-prompt>Drop a workbook here</strong>
+            <span>or choose a file from your device</span>
+            <span class="selected-file" data-file-name>No file selected</span>
+        </label>
+
+        <div class="question-field">
+            <div class="form-heading">
+                <div>
+                    <span class="step-label">Step 2</span>
+                    <label for="user_question">Ask a question</label>
+                </div>
+                <span class="question-hint">Be specific for better context</span>
+            </div>
+            <textarea id="user_question" name="user_question" rows="5" placeholder="For example: Compare revenue across all sheets and identify the strongest quarterly trend." required></textarea>
+            <div class="prompt-examples" aria-label="Example prompts">
+                <button type="button" class="prompt-chip" data-prompt="Summarize the main trends in this workbook.">Summarize trends</button>
+                <button type="button" class="prompt-chip" data-prompt="Check all sheets for missing values and formula errors.">Check for errors</button>
+                <button type="button" class="prompt-chip" data-prompt="Compare the key numeric columns across all sheets.">Compare sheets</button>
+            </div>
+        </div>
+
+        <button class="primary-action" type="submit" data-submit-button>
+            <span>Analyze workbook</span>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+    </form>
+</section>
+{% endblock %}
