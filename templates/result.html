@@ -1,230 +1,108 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel Analysis - Results</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1, h2, h3 {
-            color: #2c3e50;
-        }
-        .file-info {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .sheet-selector {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #e9f7fe;
-            border-radius: 5px;
-        }
-        .question-answer {
-            margin-bottom: 30px;
-        }
-        .question {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        .answer {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-left: 4px solid #4CAF50;
-            margin-bottom: 20px;
-        }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        .data-table th, .data-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .data-table th {
-            background-color: #f2f2f2;
-        }
-        .data-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .analysis-section {
-            margin-bottom: 30px;
-        }
-        .analysis-section h3 {
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-        }
-        .error-report {
-            background-color: #ffebee;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .trend-report {
-            background-color: #e8f5e9;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .numeric-sums {
-            background-color: #e3f2fd;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        form {
-            margin: 20px 0;
-        }
-        textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            min-height: 80px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .history-item {
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 4px;
-        }
-        .history-question {
-            font-weight: bold;
-        }
-        .sheet-switcher {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .sheet-btn {
-            padding: 8px 15px;
-            background-color: #e0e0e0;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .sheet-btn.current {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .sheet-btn:hover {
-            background-color: #d0d0d0;
-        }
-    </style>
-</head>
-<body>
-    <h1>Excel File Analysis</h1>
-    
-    <div class="file-info">
-        <h2>File: {{ filename }}</h2>
-        <p>Current sheet: <strong>{{ current_sheet }}</strong> ({{ num_rows }} rows × {{ num_cols }} columns)</p>
-        
-        {% if sheet_names|length > 1 %}
-        <div class="sheet-switcher">
-            {% for sheet in sheet_names %}
-                <form action="{{ url_for('switch_sheet') }}" method="post" style="margin:0;">
-                    <input type="hidden" name="sheet_name" value="{{ sheet }}">
-                    <button type="submit" class="sheet-btn {% if sheet == current_sheet %}current{% endif %}">
-                        {{ sheet }}
-                    </button>
-                </form>
-            {% endfor %}
-            <form action="{{ url_for('ask_another') }}" method="post" style="margin:0;">
-                <input type="hidden" name="user_question" value="Show analysis across all sheets">
-                <button type="submit" class="sheet-btn">
-                    View All Sheets
-                </button>
-            </form>
-        </div>
-        {% endif %}
+{% extends "base.html" %}
+
+{% block title %}{{ filename }} · ModelMind analysis{% endblock %}
+
+{% block content %}
+<section class="result-header">
+    <div>
+        <a class="back-link" href="{{ url_for('home') }}">← New analysis</a>
+        <span class="eyebrow">Workbook analysis</span>
+        <h1>{{ filename }}</h1>
+        <p>Review the answer, inspect the current sheet, and continue asking questions without uploading again.</p>
     </div>
-
-    <div class="question-answer">
-        <div class="question">Your question: {{ question }}</div>
-        <div class="answer">{{ answer | safe }}</div>
+    <div class="workbook-meta" aria-label="Workbook summary">
+        <div><span>Current sheet</span><strong>{{ current_sheet }}</strong></div>
+        <div><span>Rows</span><strong>{{ num_rows }}</strong></div>
+        <div><span>Columns</span><strong>{{ num_cols }}</strong></div>
     </div>
+</section>
 
-    <div class="analysis-section">
-        <h2>Data Preview</h2>
-        {{ table_html|safe }}
+{% if sheet_names|length > 1 %}
+<section class="sheet-navigation" aria-labelledby="sheet-navigation-title">
+    <div>
+        <span class="section-kicker">Workbook navigation</span>
+        <h2 id="sheet-navigation-title">Choose a sheet</h2>
     </div>
-
-    {% if numeric_sums %}
-    <div class="analysis-section">
-        <h2>Numeric Column Sums</h2>
-        <div class="numeric-sums">
-            <ul>
-                {% for col, sum in numeric_sums.items() %}
-                    <li><strong>{{ col }}</strong>: {{ sum }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="analysis-section">
-        <h2>Error Report</h2>
-        <div class="error-report">
-            {{ error_report|replace('\n', '<br>')|safe }}
-        </div>
-    </div>
-
-    <div class="analysis-section">
-        <h2>Trend Analysis</h2>
-        <div class="trend-report">
-            {{ trend_summary|replace('\n', '<br>')|safe }}
-        </div>
-    </div>
-
-
-    <div class="analysis-section">
-        <h2>Ask Another Question</h2>
+    <div class="sheet-switcher">
+        {% for sheet in sheet_names %}
+        <form action="{{ url_for('switch_sheet') }}" method="post">
+            <input type="hidden" name="sheet_name" value="{{ sheet }}">
+            <button type="submit" class="sheet-button {% if sheet == current_sheet %}is-current{% endif %}" {% if sheet == current_sheet %}aria-current="page"{% endif %}>{{ sheet }}</button>
+        </form>
+        {% endfor %}
         <form action="{{ url_for('ask_another') }}" method="post">
-            <textarea name="user_question" placeholder="Ask another question about this data..." required></textarea>
-            <button type="submit">Submit Question</button>
+            <input type="hidden" name="user_question" value="Show analysis across all sheets">
+            <button type="submit" class="sheet-button sheet-button--all">Across all sheets</button>
         </form>
     </div>
+</section>
+{% endif %}
 
-    {% if qa_history|length > 1 %}
-    <div class="analysis-section">
-        <h2>Question History</h2>
-        {% for item in qa_history[-2::-1] %}
-            <div class="history-item">
-                <div class="history-question">{{ item.question }}</div>
-                <div class="history-answer">{{ item.answer|safe }}</div>
-            </div>
-        {% endfor %}
+<div class="result-layout">
+    <section class="answer-panel" aria-labelledby="answer-title">
+        <span class="section-kicker">Model response</span>
+        <h2 id="answer-title">Answer to your question</h2>
+        <blockquote class="user-question">{{ question }}</blockquote>
+        <div class="answer-content">{{ answer | safe }}</div>
+    </section>
+
+    <aside class="continue-panel" aria-labelledby="continue-title">
+        <span class="section-kicker">Continue the analysis</span>
+        <h2 id="continue-title">Ask a follow-up</h2>
+        <p>Your workbook stays available during this session.</p>
+        <form action="{{ url_for('ask_another') }}" method="post" class="follow-up-form" data-analysis-form>
+            <label class="sr-only" for="follow-up-question">Follow-up question</label>
+            <textarea id="follow-up-question" name="user_question" rows="5" placeholder="Ask about this sheet or name another sheet…" required></textarea>
+            <button type="submit" class="primary-action" data-submit-button><span>Ask ModelMind</span></button>
+        </form>
+    </aside>
+</div>
+
+<section class="data-section" aria-labelledby="preview-title">
+    <div class="section-heading">
+        <div><span class="section-kicker">Source context</span><h2 id="preview-title">Data preview</h2></div>
+        <span class="status-badge">First 5 rows</span>
     </div>
+    <div class="table-frame" tabindex="0" aria-label="Scrollable workbook preview">{{ table_html|safe }}</div>
+</section>
+
+<section class="detail-grid" aria-label="Workbook checks and summaries">
+    {% if numeric_sums %}
+    <article class="detail-panel detail-panel--wide">
+        <span class="section-kicker">Computed overview</span>
+        <h2>Numeric column sums</h2>
+        <dl class="numeric-grid">
+            {% for col, sum in numeric_sums.items() %}
+            <div><dt>{{ col }}</dt><dd>{{ sum }}</dd></div>
+            {% endfor %}
+        </dl>
+    </article>
     {% endif %}
 
-    <div style="margin-top: 40px;">
-        <a href="{{ url_for('home') }}">Analyze another file</a>
+    <article class="detail-panel detail-panel--check">
+        <span class="section-kicker">Data check</span>
+        <h2>Error report</h2>
+        <p>{% if error_report is defined %}{{ error_report|replace('\n', '<br>')|safe }}{% else %}No error report is available for this view.{% endif %}</p>
+    </article>
+
+    <article class="detail-panel detail-panel--trend">
+        <span class="section-kicker">Pattern check</span>
+        <h2>Trend analysis</h2>
+        <p>{% if trend_summary is defined %}{{ trend_summary|replace('\n', '<br>')|safe }}{% else %}No trend summary is available for this view.{% endif %}</p>
+    </article>
+</section>
+
+{% if qa_history|length > 1 %}
+<section class="history-section" aria-labelledby="history-title">
+    <div class="section-heading"><div><span class="section-kicker">Session history</span><h2 id="history-title">Earlier questions</h2></div></div>
+    <div class="history-list">
+        {% for item in qa_history[-2::-1] %}
+        <details class="history-item">
+            <summary>{{ item.question }}</summary>
+            <div class="history-answer">{{ item.answer|safe }}</div>
+        </details>
+        {% endfor %}
     </div>
-</body>
-</html>
+</section>
+{% endif %}
+{% endblock %}

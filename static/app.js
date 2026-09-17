@@ -53,4 +53,36 @@ document.addEventListener("DOMContentLoaded", () => {
             submitButton.classList.add("is-loading");
         });
     }
+
+    document.querySelectorAll("[data-tabs]").forEach((tabGroup) => {
+        const tabs = Array.from(tabGroup.querySelectorAll("[role='tab']"));
+        const activateTab = (nextTab) => {
+            tabs.forEach((tab) => {
+                const isActive = tab === nextTab;
+                const panel = document.getElementById(tab.dataset.tabTarget);
+                tab.classList.toggle("is-active", isActive);
+                tab.setAttribute("aria-selected", String(isActive));
+                tab.tabIndex = isActive ? 0 : -1;
+                if (panel) {
+                    panel.hidden = !isActive;
+                    panel.classList.toggle("is-active", isActive);
+                }
+            });
+        };
+
+        tabs.forEach((tab, index) => {
+            tab.addEventListener("click", () => activateTab(tab));
+            tab.addEventListener("keydown", (event) => {
+                if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                event.preventDefault();
+                let nextIndex = index;
+                if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+                if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
+                if (event.key === "Home") nextIndex = 0;
+                if (event.key === "End") nextIndex = tabs.length - 1;
+                activateTab(tabs[nextIndex]);
+                tabs[nextIndex].focus();
+            });
+        });
+    });
 });

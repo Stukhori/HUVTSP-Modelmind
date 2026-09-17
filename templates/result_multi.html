@@ -1,278 +1,90 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel Analysis - Multi-Sheet Results</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1, h2, h3 {
-            color: #2c3e50;
-        }
-        .file-info {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .sheet-selector {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #e9f7fe;
-            border-radius: 5px;
-        }
-        .sheet-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ddd;
-        }
-        .sheet-tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: #f1f1f1;
-            margin-right: 5px;
-            border-radius: 5px 5px 0 0;
-        }
-        .sheet-tab.active {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .sheet-content {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 0 0 5px 5px;
-            margin-bottom: 30px;
-        }
-        .sheet-content.active {
-            display: block;
-        }
-        .question-answer {
-            margin-bottom: 30px;
-        }
-        .question {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        .answer {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-left: 4px solid #4CAF50;
-            margin-bottom: 20px;
-        }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        .data-table th, .data-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .data-table th {
-            background-color: #f2f2f2;
-        }
-        .data-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .analysis-section {
-            margin-bottom: 30px;
-        }
-        .analysis-section h3 {
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-        }
-        .cross-sheet {
-            background-color: #fff8e1;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .error-report {
-            background-color: #ffebee;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .trend-report {
-            background-color: #e8f5e9;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        form {
-            margin: 20px 0;
-        }
-        textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            min-height: 80px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .history-item {
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 4px;
-        }
-        .history-question {
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <h1>Excel File Analysis - Multiple Sheets</h1>
-   
-    <div class="file-info">
-        <h2>File: {{ filename }}</h2>
-        <p>This file contains {{ sheet_names|length }} sheets: {{ sheet_names|join(', ') }}</p>
+{% extends "base.html" %}
+
+{% block title %}{{ filename }} · Multi-sheet analysis{% endblock %}
+
+{% block content %}
+<section class="result-header result-header--multi">
+    <div>
+        <a class="back-link" href="{{ url_for('home') }}">← New analysis</a>
+        <span class="eyebrow">Cross-sheet analysis</span>
+        <h1>{{ filename }}</h1>
+        <p>Compare workbook-wide findings, then move between individual sheet previews without leaving the page.</p>
     </div>
+    <div class="workbook-meta workbook-meta--compact" aria-label="Workbook summary">
+        <div><span>Sheets analyzed</span><strong>{{ sheet_names|length }}</strong></div>
+        <div><span>View</span><strong>Cross-sheet</strong></div>
+    </div>
+</section>
 
+<div class="result-layout">
+    <section class="answer-panel" aria-labelledby="answer-title">
+        <span class="section-kicker">Model response</span>
+        <h2 id="answer-title">Workbook-wide answer</h2>
+        <blockquote class="user-question">{{ question }}</blockquote>
+        <div class="answer-content">{{ answer|safe }}</div>
+    </section>
+    <aside class="continue-panel" aria-labelledby="continue-title">
+        <span class="section-kicker">Continue the analysis</span>
+        <h2 id="continue-title">Ask a follow-up</h2>
+        <p>Name a sheet to focus the next response, or ask another across-sheet question.</p>
+        <form action="{{ url_for('ask_another') }}" method="post" class="follow-up-form" data-analysis-form>
+            <label class="sr-only" for="follow-up-question">Follow-up question</label>
+            <textarea id="follow-up-question" name="user_question" rows="5" placeholder="For example: Which sheet has the largest total?" required></textarea>
+            <button type="submit" class="primary-action" data-submit-button><span>Ask ModelMind</span></button>
+        </form>
+    </aside>
+</div>
 
-    <div class="sheet-selector">
-        <form action="{{ url_for('switch_sheet') }}" method="post">
-            <label for="sheet_name">Switch to single sheet view:</label>
+{% if analysis_results.cross_sheet_analysis %}
+<section class="cross-sheet-panel" aria-labelledby="cross-sheet-title">
+    <span class="section-kicker">Comparison</span>
+    <h2 id="cross-sheet-title">Cross-sheet findings</h2>
+    <div>{{ analysis_results.cross_sheet_analysis|replace('\n', '<br>')|safe }}</div>
+</section>
+{% endif %}
+
+<section class="sheet-explorer" aria-labelledby="sheet-explorer-title" data-tabs>
+    <div class="section-heading">
+        <div><span class="section-kicker">Workbook explorer</span><h2 id="sheet-explorer-title">Inspect individual sheets</h2></div>
+        <form action="{{ url_for('switch_sheet') }}" method="post" class="compact-sheet-form">
+            <label for="sheet_name">Open focused view</label>
             <select name="sheet_name" id="sheet_name">
-                {% for sheet in sheet_names %}
-                    <option value="{{ sheet }}">{{ sheet }}</option>
-                {% endfor %}
+                {% for sheet in sheet_names %}<option value="{{ sheet }}">{{ sheet }}</option>{% endfor %}
             </select>
-            <button type="submit">View Single Sheet</button>
+            <button type="submit" class="secondary-action">Open</button>
         </form>
     </div>
 
-
-    <div class="question-answer">
-        <div class="question">Your question: {{ question }}</div>
-        <div class="answer">{{ answer|safe }}</div>
-    </div>
-
-
-    {% if analysis_results.cross_sheet_analysis %}
-    <div class="analysis-section">
-        <h2>Cross-Sheet Analysis</h2>
-        <div class="cross-sheet">
-            {{ analysis_results.cross_sheet_analysis|replace('\n', '<br>')|safe }}
-        </div>
-    </div>
-    {% endif %}
-
-
-    <div class="sheet-tabs">
+    <div class="sheet-tabs" role="tablist" aria-label="Workbook sheets">
         {% for sheet in sheet_names %}
-            <div class="sheet-tab {% if loop.first %}active{% endif %}" onclick="showSheet('{{ sheet }}')">
-                {{ sheet }} ({{ analysis_results.individual_sheets[sheet].shape[0] }} rows × {{ analysis_results.individual_sheets[sheet].shape[1] }} cols)
-            </div>
+        <button type="button" id="sheet-tab-{{ loop.index0 }}" class="sheet-tab {% if loop.first %}is-active{% endif %}" role="tab" aria-selected="{% if loop.first %}true{% else %}false{% endif %}" aria-controls="sheet-panel-{{ loop.index0 }}" tabindex="{% if loop.first %}0{% else %}-1{% endif %}" data-tab-target="sheet-panel-{{ loop.index0 }}">
+            <span>{{ sheet }}</span>
+            <small>{{ analysis_results.individual_sheets[sheet].shape[0] }} × {{ analysis_results.individual_sheets[sheet].shape[1] }}</small>
+        </button>
         {% endfor %}
     </div>
-
 
     {% for sheet in sheet_names %}
-    <div id="sheet-{{ sheet }}" class="sheet-content {% if loop.first %}active{% endif %}">
-        <h2>Sheet: {{ sheet }}</h2>
-       
-        <div class="analysis-section">
-            <h3>Data Preview</h3>
-            {{ tables_html[sheet]|safe }}
+    <div id="sheet-panel-{{ loop.index0 }}" class="sheet-content {% if loop.first %}is-active{% endif %}" role="tabpanel" aria-labelledby="sheet-tab-{{ loop.index0 }}" {% if not loop.first %}hidden{% endif %}>
+        <div class="sheet-panel-heading"><div><span class="section-kicker">Sheet {{ loop.index }}</span><h3>{{ sheet }}</h3></div><span class="status-badge">First 5 rows</span></div>
+        <div class="table-frame" tabindex="0" aria-label="Scrollable preview of {{ sheet }}">{{ tables_html[sheet]|safe }}</div>
+        <div class="sheet-insights">
+            <article><h4>Summary</h4><p>{{ analysis_results.individual_sheets[sheet].summary|replace('\n', '<br>')|safe }}</p></article>
+            <article class="detail-panel--check"><h4>Error report</h4><p>{{ analysis_results.individual_sheets[sheet].errors|replace('\n', '<br>')|safe }}</p></article>
+            <article class="detail-panel--trend"><h4>Trend analysis</h4><p>{{ analysis_results.individual_sheets[sheet].trends|replace('\n', '<br>')|safe }}</p></article>
         </div>
-
-
-        <div class="analysis-section">
-            <h3>Summary</h3>
-            <p>{{ analysis_results.individual_sheets[sheet].summary|replace('\n', '<br>')|safe }}</p>
-        </div>
-
-
-        {% if analysis_results.individual_sheets[sheet].errors != "No obvious errors detected." %}
-        <div class="analysis-section">
-            <h3>Error Report</h3>
-            <div class="error-report">
-                {{ analysis_results.individual_sheets[sheet].errors|replace('\n', '<br>')|safe }}
-            </div>
-        </div>
-        {% endif %}
-
-
-        {% if analysis_results.individual_sheets[sheet].trends != "No clear time-series trends detected." %}
-        <div class="analysis-section">
-            <h3>Trend Analysis</h3>
-            <div class="trend-report">
-                {{ analysis_results.individual_sheets[sheet].trends|replace('\n', '<br>')|safe }}
-            </div>
-        </div>
-        {% endif %}
     </div>
     {% endfor %}
+</section>
 
-
-    <div class="analysis-section">
-        <h2>Ask Another Question</h2>
-        <form action="{{ url_for('ask_another') }}" method="post">
-            <textarea name="user_question" placeholder="Ask another question about this data..." required></textarea>
-            <button type="submit">Submit Question</button>
-        </form>
-    </div>
-
-
-    {% if qa_history|length > 1 %}
-    <div class="analysis-section">
-        <h2>Question History</h2>
+{% if qa_history|length > 1 %}
+<section class="history-section" aria-labelledby="history-title">
+    <div class="section-heading"><div><span class="section-kicker">Session history</span><h2 id="history-title">Earlier questions</h2></div></div>
+    <div class="history-list">
         {% for item in qa_history[-2::-1] %}
-            <div class="history-item">
-                <div class="history-question">{{ item.question }}</div>
-                <div class="history-answer">{{ item.answer|safe }}</div>
-            </div>
+        <details class="history-item"><summary>{{ item.question }}</summary><div class="history-answer">{{ item.answer|safe }}</div></details>
         {% endfor %}
     </div>
-    {% endif %}
-
-
-    <div style="margin-top: 40px;">
-        <a href="{{ url_for('home') }}">Analyze another file</a>
-    </div>
-
-
-    <script>
-        function showSheet(sheetName) {
-            // Hide all sheet contents
-            document.querySelectorAll('.sheet-content').forEach(content => {
-                content.classList.remove('active');
-            });
-           
-            // Show selected sheet content
-            document.getElementById('sheet-' + sheetName).classList.add('active');
-           
-            // Update active tab
-            document.querySelectorAll('.sheet-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.currentTarget.classList.add('active');
-        }
-    </script>
-</body>
-</html>
+</section>
+{% endif %}
+{% endblock %}
