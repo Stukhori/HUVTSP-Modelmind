@@ -50,3 +50,23 @@ def test_xls_receives_actionable_error(client):
         follow_redirects=True,
     )
     assert b"Please use an .xlsx workbook" in response.data
+
+
+def test_home_preserves_analysis_until_explicit_reset(client):
+    response = client.post(
+        "/upload",
+        data={"excel_file": (workbook_bytes(), "sample.xlsx"), "user_question": "Summarize"},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 200
+    assert b"Continue analysis" in client.get("/").data
+    assert b"Test answer" in client.get("/result").data
+    with client.session_transaction() as state:
+        uploaded = Path(state["file_data"]["file_path"])
+    assert uploaded.exists()
+    response = client.post("/new_analysis", follow_redirects=True)
+    assert b"Ready for a new workbook" in response.data
+    assert not uploaded.exists()
+    with client.session_transaction() as state:
+        assert "file_data" not in state
+        assert "qa_history" not in state

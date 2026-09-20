@@ -8,6 +8,7 @@ import logging
 import openpyxl
 from uuid import uuid4
 from datetime import datetime
+from pathlib import Path
 import markdown
 import mimetypes
 mimetypes.init()
@@ -205,8 +206,20 @@ def call_gemini_api(prompt: str) -> str:
 
 @app.route('/')
 def home():
-    session.pop('file_data', None)
     return render_template('index.html')
+
+
+@app.route('/new_analysis', methods=['POST'])
+def new_analysis():
+    file_data = session.pop('file_data', None)
+    session.pop('qa_history', None)
+    if file_data:
+        upload_dir = Path(app.config['UPLOAD_FOLDER']).resolve()
+        file_path = Path(file_data.get('file_path', '')).resolve()
+        if file_path.parent == upload_dir and file_path.is_file():
+            file_path.unlink()
+    flash('Ready for a new workbook.')
+    return redirect(url_for('home'))
 
 
 @app.route('/upload', methods=['POST'])

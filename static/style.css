@@ -68,6 +68,15 @@ a { color: inherit; }
 }
 .site-nav a:hover { color: var(--indigo-dark); background: var(--indigo-soft); }
 .page-shell { width: min(92%, 1440px); margin: 0 auto; }
+.resume-banner { display:flex; align-items:center; justify-content:space-between; gap:24px; margin-top:26px; padding:18px 22px; border:1px solid #b9c4d6; border-radius:var(--radius-md); background:#fff; }
+.resume-banner strong { display:block; max-width:100%; margin:2px 0; overflow-wrap:anywhere; }
+.resume-banner p { margin:0; color:var(--ink-500); font-size:.88rem; }
+.resume-actions { display:flex; align-items:center; gap:16px; flex:0 0 auto; }
+.resume-actions form { margin:0; }
+.resume-link { padding:10px 14px; border-radius:var(--radius-sm); color:#fff; background:var(--indigo); font-weight:750; text-decoration:none; }
+.resume-link:hover { background:var(--indigo-dark); }
+.text-action { padding:9px 0; border:0; color:var(--indigo-dark); background:none; font-weight:750; cursor:pointer; }
+.text-action:hover { text-decoration:underline; }
 
 .hero {
     min-height: 440px; display: grid; grid-template-columns: minmax(0, 1.06fr) minmax(360px, 0.94fr);
@@ -183,6 +192,7 @@ textarea:focus, select:focus { border-color: var(--indigo); outline: 3px solid r
     .workflow-steps li { grid-template-columns: 1fr; align-content: start; }
 }
 @media (max-width: 640px) {
+    .resume-banner, .resume-actions { align-items:flex-start; flex-direction:column; }
     .site-header__inner { min-height: 68px; }
     .brand small, .site-nav a:last-child { display: none; }
     .site-nav a { padding: 8px; }

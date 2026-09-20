@@ -23,7 +23,7 @@
                 <span><strong>ModelMind</strong><small>Workbook intelligence</small></span>
             </a>
             <nav class="site-nav" aria-label="Primary navigation">
-                <a href="{{ url_for('home') }}">New analysis</a>
+                {% if session.get('file_data') %}<a href="{{ url_for('result') }}">Current analysis</a>{% else %}<a href="{{ url_for('home') }}">New analysis</a>{% endif %}
                 <a href="https://github.com/Stukhori/HUVTSP-Modelmind" rel="noreferrer">Source code</a>
             </nav>
         </div>

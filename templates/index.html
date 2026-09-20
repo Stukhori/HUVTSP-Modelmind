@@ -3,6 +3,12 @@
 {% block title %}ModelMind · Ask questions about your workbook{% endblock %}
 
 {% block content %}
+{% if session.get('file_data') %}
+<section class="resume-banner" aria-label="Current workbook">
+    <div><span class="eyebrow">Analysis in progress</span><strong>{{ session['file_data']['filename'] }}</strong><p>Your workbook and questions are still available in this session.</p></div>
+    <div class="resume-actions"><a class="resume-link" href="{{ url_for('result') }}">Continue analysis</a><form action="{{ url_for('new_analysis') }}" method="post"><button type="submit" class="text-action">Start fresh</button></form></div>
+</section>
+{% endif %}
 <section class="hero" aria-labelledby="hero-title">
     <div class="hero__copy">
         <span class="eyebrow">Excel analysis, guided by your question</span>
