@@ -122,7 +122,7 @@ a { color: inherit; }
 .insight-card span:nth-child(3) { width: 100%; }
 .insight-card span:nth-child(4) { width: 58%; }
 
-.flash-stack { display: grid; gap: 10px; margin-bottom: 22px; }
+.flash-stack { display: grid; gap: 10px; margin: 22px 0; }
 .flash-message {
     padding: 14px 16px; border: 1px solid #f3c8c2; border-radius: var(--radius-sm);
     color: var(--danger); background: var(--danger-soft); font-weight: 650;

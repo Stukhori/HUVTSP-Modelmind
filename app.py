@@ -28,9 +28,6 @@ app.config['MAX_WORKBOOK_BYTES'] = 15 * 1024 * 1024
 app.config['SESSION_PERMANENT'] = False
 
 
-genai.configure(api_key="gemini-api-key")
-
-
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
@@ -44,6 +41,10 @@ def allowed_file(filename):
     mime_ok = mime_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
    
     return ext_ok and mime_ok
+
+
+class AnalysisUnavailableError(RuntimeError):
+    """The AI response could not be completed; do not present it as an answer."""
 
 
 @app.errorhandler(RequestEntityTooLarge)
@@ -188,8 +189,12 @@ def analyze_multiple_sheets(file_path: str, sheet_names: list) -> dict:
 
 
 def call_gemini_api(prompt: str) -> str:
+    api_key = os.environ.get('GOOGLE_API_KEY', '').strip()
+    if not api_key:
+        raise AnalysisUnavailableError('Analysis is not configured. Set GOOGLE_API_KEY and try again.')
     try:
         logger.info("Calling Gemini API...")
+        genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-1.5-flash")
         formatted_prompt = (
             f"{prompt}\n\n"
@@ -208,8 +213,8 @@ def call_gemini_api(prompt: str) -> str:
         html_content = markdown.markdown(response.text.strip())
         return html_content
     except Exception as e:
-        logger.error(f"Error calling Gemini API: {e}")
-        return markdown.markdown(f"Error generating Gemini response: {e}")
+        logger.error("Gemini analysis failed: %s", e)
+        raise AnalysisUnavailableError('The analysis service did not respond. Please try again.') from e
 
 
 @app.route('/')
@@ -466,7 +471,7 @@ def upload_file():
         logger.error(f"Error processing file: {str(e)}")
         if os.path.exists(file_path):
             os.remove(file_path)
-        flash(f'Error processing file: {str(e)}')
+        flash(str(e) if isinstance(e, AnalysisUnavailableError) else 'The workbook could not be analyzed. Check that it is a valid .xlsx file.')
         return redirect(url_for('home'))
 
 
@@ -714,8 +719,8 @@ def ask_another():
 
     except Exception as e:
         logger.error(f"Error processing question: {str(e)}")
-        flash(f'Error processing question: {str(e)}')
-        return redirect(url_for('home'))
+        flash(str(e) if isinstance(e, AnalysisUnavailableError) else 'The follow-up question could not be completed. Please try again.')
+        return redirect(url_for('result'))
 
 
 @app.route('/result')

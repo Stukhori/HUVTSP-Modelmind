@@ -36,16 +36,6 @@
     </div>
 </section>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <section class="flash-stack" aria-live="polite" aria-label="Notifications">
-        {% for category, message in messages %}
-            <div class="flash-message flash-{{ category }}">{{ message }}</div>
-        {% endfor %}
-    </section>
-    {% endif %}
-{% endwith %}
-
 <section class="analysis-workspace" aria-labelledby="workspace-title">
     <div class="workflow-guide">
         <span class="eyebrow">Three-step workflow</span>

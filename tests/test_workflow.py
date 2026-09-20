@@ -6,6 +6,7 @@ import openpyxl
 import pytest
 
 import app as modelmind
+from app import call_gemini_api as real_call_gemini_api
 
 
 @pytest.fixture
@@ -143,3 +144,25 @@ def test_large_workbook_is_rejected_before_model_call(client, monkeypatch):
         follow_redirects=True,
     )
     assert b"workbook under 15 MB" in response.data
+
+
+def test_missing_api_key_is_not_rendered_as_an_answer(monkeypatch):
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    with pytest.raises(modelmind.AnalysisUnavailableError, match="Set GOOGLE_API_KEY"):
+        real_call_gemini_api("Summarize this workbook")
+
+
+def test_service_failure_does_not_overwrite_the_previous_answer(client, monkeypatch):
+    client.post(
+        "/upload",
+        data={"excel_file": (workbook_bytes(), "sample.xlsx"), "user_question": "Summarize"},
+        content_type="multipart/form-data",
+    )
+    def unavailable(_prompt):
+        raise modelmind.AnalysisUnavailableError("The analysis service did not respond. Please try again.")
+    monkeypatch.setattr(modelmind, "call_gemini_api", unavailable)
+    response = client.post("/ask_another", data={"user_question": "Follow up"}, follow_redirects=True)
+    assert b"analysis service did not respond" in response.data
+    assert b"Test answer" in response.data
+    with client.session_transaction() as state:
+        assert len(state["qa_history"]) == 1
