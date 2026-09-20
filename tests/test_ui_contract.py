@@ -33,7 +33,7 @@ class ModelMindUIContractTests(unittest.TestCase):
         self.assertIn('action="{{ url_for(\'upload_file\') }}"', self.index)
         self.assertRegex(self.index, r'name="excel_file"[^>]+required')
         self.assertRegex(self.index, r'name="user_question"[^>]+required')
-        self.assertIn('accept=".xls,.xlsx"', self.index)
+        self.assertIn('accept=".xlsx"', self.index)
 
     def test_fake_navigation_and_history_are_removed(self):
         self.assertNotIn('class="sidebar"', self.index)

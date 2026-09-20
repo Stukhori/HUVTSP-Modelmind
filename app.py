@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['ALLOWED_EXTENSIONS'] = {'xls', 'xlsx'}
+app.config['ALLOWED_EXTENSIONS'] = {'xlsx'}
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['SESSION_PERMANENT'] = False
 
@@ -38,10 +38,7 @@ def allowed_file(filename):
    
     # Check MIME type
     mime_type = mimetypes.guess_type(filename)[0]
-    mime_ok = mime_type in [
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ] if mime_type else False
+    mime_ok = mime_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
    
     return ext_ok and mime_ok
 
@@ -52,11 +49,14 @@ def detect_errors(df: pd.DataFrame, file_path: str, sheet_name: str) -> str:
         error_report += f"Missing values detected in {df.isnull().sum().to_string()}.\n"
     try:
         wb = openpyxl.load_workbook(file_path)
-        ws = wb[sheet_name]
-        for row in ws.iter_rows():
-            for cell in row:
-                if isinstance(cell.value, str) and cell.value.startswith('#'):
-                    error_report += f"Formula error in cell {cell.coordinate}: {cell.value}.\n"
+        try:
+            ws = wb[sheet_name]
+            for row in ws.iter_rows():
+                for cell in row:
+                    if isinstance(cell.value, str) and cell.value.startswith('#'):
+                        error_report += f"Formula error in cell {cell.coordinate}: {cell.value}.\n"
+        finally:
+            wb.close()
     except Exception as e:
         logger.error(f"Error detecting Excel errors: {e}")
     return error_report.strip() or "No obvious errors detected."
@@ -84,9 +84,12 @@ def compute_trends(df: pd.DataFrame) -> str:
 def get_formula(file_path: str, sheet_name: str, cell_ref: str) -> str:
     try:
         wb = openpyxl.load_workbook(file_path)
-        ws = wb[sheet_name]
-        cell = ws[cell_ref]
-        return cell.formula if cell.formula else f"No formula in cell {cell_ref}."
+        try:
+            ws = wb[sheet_name]
+            cell = ws[cell_ref]
+            return cell.formula if cell.formula else f"No formula in cell {cell_ref}."
+        finally:
+            wb.close()
     except Exception as e:
         logger.error(f"Error retrieving formula: {e}")
         return f"Error retrieving formula for cell {cell_ref}."
@@ -231,7 +234,7 @@ def upload_file():
     if not allowed_file(file.filename):
         # Get detected MIME type for better error message
         mime_type = mimetypes.guess_type(file.filename)[0] or "unknown"
-        flash(f'Invalid file format. Detected type: {mime_type}. Only Excel files (.xls, .xlsx) are allowed.')
+        flash(f'Invalid file format. Detected type: {mime_type}. Please use an .xlsx workbook.')
         return redirect(url_for('home'))
 
 
@@ -242,8 +245,8 @@ def upload_file():
 
     try:
         logger.info(f"Processing file: {filename}")
-        excel_file = pd.ExcelFile(file_path, engine='openpyxl')
-        sheet_names = excel_file.sheet_names
+        with pd.ExcelFile(file_path, engine='openpyxl') as excel_file:
+            sheet_names = excel_file.sheet_names
         if not sheet_names:
             raise ValueError("Excel file has no sheets.")
        
