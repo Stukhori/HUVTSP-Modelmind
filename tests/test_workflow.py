@@ -166,3 +166,16 @@ def test_service_failure_does_not_overwrite_the_previous_answer(client, monkeypa
     assert b"Test answer" in response.data
     with client.session_transaction() as state:
         assert len(state["qa_history"]) == 1
+
+
+def test_question_history_records_which_sheet_was_analyzed(client):
+    client.post(
+        "/upload",
+        data={"excel_file": (workbook_bytes(), "sample.xlsx"), "user_question": "Summarize"},
+        content_type="multipart/form-data",
+    )
+    response = client.post("/ask_another", data={"user_question": "What changed?", "analysis_scope": "current"})
+    assert b"Earlier questions" in response.data
+    assert b"Summarize" in response.data
+    with client.session_transaction() as state:
+        assert [item["scope"] for item in state["qa_history"]] == ["Sales", "Sales"]

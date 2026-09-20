@@ -101,11 +101,11 @@
 
 {% if qa_history|length > 1 %}
 <section class="history-section" aria-labelledby="history-title">
-    <div class="section-heading"><div><span class="section-kicker">Session history</span><h2 id="history-title">Earlier questions</h2></div></div>
+    <div class="section-heading"><div><span class="section-kicker">Session history · {{ qa_history|length - 1 }} earlier</span><h2 id="history-title">Earlier questions</h2></div></div>
     <div class="history-list">
         {% for item in qa_history[-2::-1] %}
         <details class="history-item">
-            <summary>{{ item.question }}</summary>
+            <summary><span>{{ item.question }}</span><small>{{ item.scope|default('Workbook') }}</small></summary>
             <div class="history-answer">{{ item.answer|safe }}</div>
         </details>
         {% endfor %}

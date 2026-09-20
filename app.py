@@ -342,7 +342,7 @@ def upload_file():
                 'current_sheet': specific_sheet,
                 'multi_sheet': False
             }
-            session['qa_history'] = [{'question': user_question, 'answer': answer}]
+            session['qa_history'] = [{'question': user_question, 'answer': answer, 'scope': specific_sheet}]
            
             return render_template('result.html',
                                 filename=filename,
@@ -393,7 +393,7 @@ def upload_file():
                 'current_sheet': None,
                 'multi_sheet': True
             }
-            session['qa_history'] = [{'question': user_question, 'answer': answer}]
+            session['qa_history'] = [{'question': user_question, 'answer': answer, 'scope': 'All sheets'}]
            
             return render_template('result_multi.html',
                                 filename=filename,
@@ -450,7 +450,7 @@ def upload_file():
                 'current_sheet': sheet_names[0],
                 'multi_sheet': False
             }
-            session['qa_history'] = [{'question': user_question, 'answer': answer}]
+            session['qa_history'] = [{'question': user_question, 'answer': answer, 'scope': sheet_names[0]}]
            
             return render_template('result.html',
                                 filename=filename,
@@ -598,7 +598,7 @@ def ask_another():
             })
            
             # Add to QA history
-            session['qa_history'].append({'question': user_question, 'answer': answer})
+            session['qa_history'].append({'question': user_question, 'answer': answer, 'scope': specific_sheet})
             session.modified = True
            
             return render_template('result.html',
@@ -649,7 +649,7 @@ def ask_another():
             logger.info(f"Gemini prompt:\n{prompt}")
             answer = call_gemini_api(prompt)
            
-            session['qa_history'].append({'question': user_question, 'answer': answer})
+            session['qa_history'].append({'question': user_question, 'answer': answer, 'scope': 'All sheets'})
             session.modified = True
            
             return render_template('result_multi.html',
@@ -699,7 +699,7 @@ def ask_another():
                 'answer_visible': True,
             })
            
-            session['qa_history'].append({'question': user_question, 'answer': answer})
+            session['qa_history'].append({'question': user_question, 'answer': answer, 'scope': current_sheet})
             session.modified = True
            
             return render_template('result.html',
