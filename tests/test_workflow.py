@@ -70,3 +70,26 @@ def test_home_preserves_analysis_until_explicit_reset(client):
     with client.session_transaction() as state:
         assert "file_data" not in state
         assert "qa_history" not in state
+
+
+def test_switching_sheet_never_presents_a_fabricated_model_answer(client):
+    workbook = openpyxl.Workbook()
+    workbook.active.title = "Sales"
+    workbook.active.append(["Revenue"])
+    workbook.active.append([120])
+    workbook.create_sheet("Costs").append(["Cost"])
+    content = BytesIO()
+    workbook.save(content)
+    content.seek(0)
+    client.post(
+        "/upload",
+        data={"excel_file": (content, "sample.xlsx"), "user_question": "Summarize"},
+        content_type="multipart/form-data",
+    )
+    switched = client.post("/switch_sheet", data={"sheet_name": "Costs"})
+    assert b"Switching sheets does not generate a new answer" in switched.data
+    assert b"Test answer" not in switched.data
+    refreshed = client.get("/result")
+    assert b"Switching sheets does not generate a new answer" in refreshed.data
+    follow_up = client.post("/ask_another", data={"user_question": "What is in this sheet?"})
+    assert b"Test answer" in follow_up.data

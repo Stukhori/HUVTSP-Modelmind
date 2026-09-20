@@ -40,10 +40,16 @@
 
 <div class="result-layout">
     <section class="answer-panel" aria-labelledby="answer-title">
+        {% if answer %}
         <span class="section-kicker">Model response</span>
         <h2 id="answer-title">Answer to your question</h2>
         <blockquote class="user-question">{{ question }}</blockquote>
         <div class="answer-content">{{ answer | safe }}</div>
+        {% else %}
+        <span class="section-kicker">Focused sheet view</span>
+        <h2 id="answer-title">{{ current_sheet }} is ready to explore</h2>
+        <p class="empty-answer">Switching sheets does not generate a new answer. Review the preview below, then ask a question about this sheet.</p>
+        {% endif %}
     </section>
 
     <aside class="continue-panel" aria-labelledby="continue-title">

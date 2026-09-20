@@ -486,13 +486,15 @@ def switch_sheet():
             'num_cols': len(df.columns),
             'table_html': df.head(5).to_html(index=False, classes='data-table'),
             'numeric_sums': df.select_dtypes(include='number').sum().to_dict() if not df.empty else {},
-            'multi_sheet': False
+            'multi_sheet': False,
+            'answer_visible': False,
         })
+        session.modified = True
        
         return render_template('result.html',
                             filename=file_data['filename'],
-                            question=session['qa_history'][-1]['question'] if 'qa_history' in session else "Sheet switched",
-                            answer=f"Now viewing sheet: {selected_sheet}",
+                            question=None,
+                            answer=None,
                             sheet_names=file_data['sheet_names'],
                             num_rows=len(df),
                             num_cols=len(df.columns),
@@ -560,7 +562,8 @@ def ask_another():
                 'num_cols': len(df.columns),
                 'table_html': df.head(5).to_html(index=False, classes='data-table'),
                 'numeric_sums': df.select_dtypes(include='number').sum().to_dict() if not df.empty else {},
-                'multi_sheet': False
+                'multi_sheet': False,
+                'answer_visible': True,
             })
            
             # Add to QA history
@@ -585,6 +588,7 @@ def ask_another():
             analysis_results = analyze_multiple_sheets(file_path, file_data['sheet_names'])
            
             session['file_data']['analysis_results'] = analysis_results
+            session['file_data']['answer_visible'] = True
            
             tables_html = {}
             for sheet in file_data['sheet_names']:
@@ -656,7 +660,8 @@ def ask_another():
                 'num_rows': len(df),
                 'num_cols': len(df.columns),
                 'table_html': df.head(5).to_html(index=False, classes='data-table'),
-                'numeric_sums': df.select_dtypes(include='number').sum().to_dict() if not df.empty else {}
+                'numeric_sums': df.select_dtypes(include='number').sum().to_dict() if not df.empty else {},
+                'answer_visible': True,
             })
            
             session['qa_history'].append({'question': user_question, 'answer': answer})
@@ -695,8 +700,8 @@ def result():
     if file_data.get('multi_sheet', False):
         return render_template('result_multi.html',
                             filename=file_data['filename'],
-                            question=qa_history[-1]['question'],
-                            answer=qa_history[-1]['answer'],
+                            question=qa_history[-1]['question'] if file_data.get('answer_visible', True) else None,
+                            answer=qa_history[-1]['answer'] if file_data.get('answer_visible', True) else None,
                             sheet_names=file_data['sheet_names'],
                             analysis_results=file_data['analysis_results'],
                             tables_html=file_data['tables_html'],
@@ -704,8 +709,8 @@ def result():
     else:
         return render_template('result.html',
                             filename=file_data['filename'],
-                            question=qa_history[-1]['question'],
-                            answer=qa_history[-1]['answer'],
+                            question=qa_history[-1]['question'] if file_data.get('answer_visible', True) else None,
+                            answer=qa_history[-1]['answer'] if file_data.get('answer_visible', True) else None,
                             sheet_names=file_data['sheet_names'],
                             num_rows=file_data['num_rows'],
                             num_cols=file_data['num_cols'],
