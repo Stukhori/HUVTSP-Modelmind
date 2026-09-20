@@ -44,15 +44,22 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    const form = document.querySelector("[data-analysis-form]");
-    const submitButton = document.querySelector("[data-submit-button]");
-    if (form && submitButton) {
-        form.addEventListener("submit", () => {
+    document.querySelectorAll("[data-analysis-form]").forEach((form) => {
+        form.addEventListener("submit", (event) => {
+            const submitButton = event.submitter || form.querySelector("[data-submit-button]");
+            if (!submitButton) return;
+            if (submitButton.name) {
+                const scope = document.createElement("input");
+                scope.type = "hidden";
+                scope.name = submitButton.name;
+                scope.value = submitButton.value;
+                form.append(scope);
+            }
             submitButton.disabled = true;
             submitButton.querySelector("span").textContent = "Analyzing workbook…";
             submitButton.classList.add("is-loading");
         });
-    }
+    });
 
     document.querySelectorAll("[data-tabs]").forEach((tabGroup) => {
         const tabs = Array.from(tabGroup.querySelectorAll("[role='tab']"));

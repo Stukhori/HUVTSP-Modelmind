@@ -59,7 +59,8 @@
         <form action="{{ url_for('ask_another') }}" method="post" class="follow-up-form" data-analysis-form>
             <label class="sr-only" for="follow-up-question">Follow-up question</label>
             <textarea id="follow-up-question" name="user_question" rows="5" placeholder="Ask about this sheet or name another sheet…" required></textarea>
-            <button type="submit" class="primary-action" data-submit-button><span>Ask ModelMind</span></button>
+            <button type="submit" name="analysis_scope" value="current" class="primary-action" data-submit-button><span>Ask about {{ current_sheet }}</span></button>
+            {% if sheet_names|length > 1 %}<button type="submit" name="analysis_scope" value="all" class="secondary-action secondary-action--dark" data-submit-button><span>Compare all sheets</span></button>{% endif %}
         </form>
     </aside>
 </div>

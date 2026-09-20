@@ -528,12 +528,23 @@ def ask_another():
     try:
         file_data = session['file_data']
         file_path = file_data['file_path']
+        scope = request.form.get('analysis_scope', 'auto')
+        target_sheet = request.form.get('target_sheet')
+        if scope not in {'auto', 'current', 'all'}:
+            flash('Choose a valid analysis scope.')
+            return redirect(url_for('result'))
+        if target_sheet and target_sheet not in file_data['sheet_names']:
+            flash('Choose a valid workbook sheet.')
+            return redirect(url_for('result'))
        
         specific_sheet = None
-        for sheet in file_data['sheet_names']:
-            if re.search(rf'\b{re.escape(sheet)}\b', user_question, re.IGNORECASE):
-                specific_sheet = sheet
-                break
+        if scope == 'current':
+            specific_sheet = target_sheet or file_data.get('current_sheet') or file_data['sheet_names'][0]
+        elif scope == 'auto':
+            for sheet in file_data['sheet_names']:
+                if re.search(rf'\b{re.escape(sheet)}\b', user_question, re.IGNORECASE):
+                    specific_sheet = sheet
+                    break
        
         if specific_sheet:
             logger.info(f"Question about specific sheet: {specific_sheet}")
@@ -583,12 +594,16 @@ def ask_another():
                                 error_report=error_report,
                                 trend_summary=trend_summary,
                                 qa_history=session['qa_history'])
-        elif file_data.get('multi_sheet', False) or any(kw in user_question.lower() for kw in ['all sheets', 'across sheets', 'multiple sheets']):
+        elif scope == 'all' or (scope == 'auto' and (
+            file_data.get('multi_sheet', False) or
+            any(kw in user_question.lower() for kw in ['all sheets', 'across sheets', 'multiple sheets'])
+        )):
             logger.info("Performing full multi-sheet analysis")
             analysis_results = analyze_multiple_sheets(file_path, file_data['sheet_names'])
            
             session['file_data']['analysis_results'] = analysis_results
             session['file_data']['answer_visible'] = True
+            session['file_data']['multi_sheet'] = True
            
             tables_html = {}
             for sheet in file_data['sheet_names']:

@@ -275,6 +275,10 @@ textarea:focus, select:focus { border-color: var(--indigo); outline: 3px solid r
 .continue-panel textarea::placeholder { color: #aeb8ca; }
 .continue-panel .primary-action { color: var(--ink-950); background: var(--mint); }
 .continue-panel .primary-action:hover { background: #80e3c7; }
+.follow-up-label { display:block; margin:15px 0 6px; color:#e4eaf5; font-size:.8rem; font-weight:700; }
+.continue-panel select { padding:10px; border-color:#53617b; color:#fff; background:#22304d; }
+.secondary-action--dark { display:block; width:100%; margin-top:9px; border-color:#667592; color:#fff; background:transparent; }
+.secondary-action--dark:hover { border-color:var(--mint); color:var(--mint); background:#22304d; }
 
 .data-section { margin-bottom: 24px; padding: clamp(22px, 3vw, 34px); }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 18px; }

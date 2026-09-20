@@ -93,3 +93,41 @@ def test_switching_sheet_never_presents_a_fabricated_model_answer(client):
     assert b"Switching sheets does not generate a new answer" in refreshed.data
     follow_up = client.post("/ask_another", data={"user_question": "What is in this sheet?"})
     assert b"Test answer" in follow_up.data
+
+
+def test_explicit_scope_moves_between_single_and_multi_sheet_views(client):
+    workbook = openpyxl.Workbook()
+    workbook.active.title = "Sales"
+    workbook.active.append(["Revenue"])
+    workbook.active.append([120])
+    workbook.create_sheet("Costs").append(["Cost"])
+    content = BytesIO()
+    workbook.save(content)
+    content.seek(0)
+    client.post(
+        "/upload",
+        data={"excel_file": (content, "sample.xlsx"), "user_question": "Summarize"},
+        content_type="multipart/form-data",
+    )
+    multi = client.post("/ask_another", data={"user_question": "How do they compare?", "analysis_scope": "all"})
+    assert b"Workbook-wide answer" in multi.data
+    assert b"Cross-sheet findings" in client.get("/result").data
+    single = client.post("/ask_another", data={
+        "user_question": "What is here?", "analysis_scope": "current", "target_sheet": "Costs",
+    })
+    assert b"Answer to your question" in single.data
+    assert b"Costs" in client.get("/result").data
+
+
+def test_invalid_scope_or_sheet_does_not_call_model(client, monkeypatch):
+    client.post(
+        "/upload",
+        data={"excel_file": (workbook_bytes(), "sample.xlsx"), "user_question": "Summarize"},
+        content_type="multipart/form-data",
+    )
+    monkeypatch.setattr(modelmind, "call_gemini_api", lambda prompt: pytest.fail("model called"))
+    for form in (
+        {"user_question": "Hello", "analysis_scope": "invalid"},
+        {"user_question": "Hello", "analysis_scope": "current", "target_sheet": "Unknown"},
+    ):
+        assert client.post("/ask_another", data=form).status_code == 302

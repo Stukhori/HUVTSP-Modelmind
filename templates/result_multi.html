@@ -30,7 +30,10 @@
         <form action="{{ url_for('ask_another') }}" method="post" class="follow-up-form" data-analysis-form>
             <label class="sr-only" for="follow-up-question">Follow-up question</label>
             <textarea id="follow-up-question" name="user_question" rows="5" placeholder="For example: Which sheet has the largest total?" required></textarea>
-            <button type="submit" class="primary-action" data-submit-button><span>Ask ModelMind</span></button>
+            <label class="follow-up-label" for="target_sheet">Focus on a sheet</label>
+            <select id="target_sheet" name="target_sheet">{% for sheet in sheet_names %}<option value="{{ sheet }}">{{ sheet }}</option>{% endfor %}</select>
+            <button type="submit" name="analysis_scope" value="current" class="primary-action" data-submit-button><span>Ask selected sheet</span></button>
+            <button type="submit" name="analysis_scope" value="all" class="secondary-action secondary-action--dark" data-submit-button><span>Compare all sheets</span></button>
         </form>
     </aside>
 </div>
