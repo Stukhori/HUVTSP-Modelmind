@@ -179,3 +179,26 @@ def test_question_history_records_which_sheet_was_analyzed(client):
     assert b"Summarize" in response.data
     with client.session_transaction() as state:
         assert [item["scope"] for item in state["qa_history"]] == ["Sales", "Sales"]
+
+
+def test_formula_question_uses_the_exact_cell_reference(client, monkeypatch):
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Sales"
+    sheet.append(["Amount", "Total"])
+    sheet.append([120, "=SUM(A2:A3)"])
+    sheet.append([80, None])
+    content = BytesIO()
+    workbook.save(content)
+    content.seek(0)
+    prompts = []
+    monkeypatch.setattr(modelmind, "call_gemini_api", lambda prompt: prompts.append(prompt) or "<p>Formula answer</p>")
+    response = client.post(
+        "/upload",
+        data={"excel_file": (content, "formula.xlsx"), "user_question": "In Q3, what is the formula in cell B2?"},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 200
+    assert "Formula in cell B2: =SUM(A2:A3)" in prompts[0]
+    client.post("/ask_another", data={"user_question": "What is the formula in cell B2?", "analysis_scope": "current"})
+    assert "Formula in cell B2: =SUM(A2:A3)" in prompts[1]

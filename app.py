@@ -93,16 +93,24 @@ def compute_trends(df: pd.DataFrame) -> str:
 
 def get_formula(file_path: str, sheet_name: str, cell_ref: str) -> str:
     try:
-        wb = openpyxl.load_workbook(file_path)
+        wb = openpyxl.load_workbook(file_path, data_only=False)
         try:
             ws = wb[sheet_name]
             cell = ws[cell_ref]
-            return cell.formula if cell.formula else f"No formula in cell {cell_ref}."
+            return str(cell.value) if cell.data_type == 'f' else f"No formula in cell {cell_ref}."
         finally:
             wb.close()
     except Exception as e:
         logger.error(f"Error retrieving formula: {e}")
         return f"Error retrieving formula for cell {cell_ref}."
+
+
+def formula_context(file_path: str, sheet_name: str, question: str) -> str:
+    match = re.search(r'formula\s+in\s+cell\s+([A-Za-z]{1,3}[1-9][0-9]*)', question, re.IGNORECASE)
+    if not match:
+        return ''
+    cell_ref = match.group(1).upper()
+    return f"\nFormula in cell {cell_ref}: {get_formula(file_path, sheet_name, cell_ref)}"
 
 
 def summarize_excel(df: pd.DataFrame, sheet_name: str = None) -> str:
@@ -309,13 +317,7 @@ def upload_file():
             trend_summary = compute_trends(df)
            
             data_summary = summarize_excel(df, specific_sheet)
-            cell_ref = None
-            if re.search(r'formula\s+in\s+cell\s+(\w+\d+)', user_question, re.IGNORECASE):
-                cell_match = re.search(r'(\w+\d+)', user_question, re.IGNORECASE)
-                if cell_match:
-                    cell_ref = cell_match.group(1)
-                    formula = get_formula(file_path, specific_sheet, cell_ref)
-                    data_summary += f"\nFormula in cell {cell_ref}: {formula}"
+            data_summary += formula_context(file_path, specific_sheet, user_question)
            
             prompt = f"Data from Excel file (sheet: {specific_sheet}): {data_summary}\n"
             if error_report != "No obvious errors detected.":
@@ -417,13 +419,7 @@ def upload_file():
             trend_summary = compute_trends(df)
            
             data_summary = summarize_excel(df, sheet_names[0])
-            cell_ref = None
-            if re.search(r'formula\s+in\s+cell\s+(\w+\d+)', user_question, re.IGNORECASE):
-                cell_match = re.search(r'(\w+\d+)', user_question, re.IGNORECASE)
-                if cell_match:
-                    cell_ref = cell_match.group(1)
-                    formula = get_formula(file_path, sheet_names[0], cell_ref)
-                    data_summary += f"\nFormula in cell {cell_ref}: {formula}"
+            data_summary += formula_context(file_path, sheet_names[0], user_question)
            
             prompt = f"Data from Excel file (sheet: {sheet_names[0]}): {data_summary}\n"
             if error_report != "No obvious errors detected.":
@@ -570,6 +566,7 @@ def ask_another():
             logger.info(f"Question about specific sheet: {specific_sheet}")
             df = pd.read_excel(file_path, engine='openpyxl', sheet_name=specific_sheet)
             data_summary = summarize_excel(df, specific_sheet)
+            data_summary += formula_context(file_path, specific_sheet, user_question)
             error_report = detect_errors(df, file_path, specific_sheet)
             trend_summary = compute_trends(df)
            
@@ -670,13 +667,7 @@ def ask_another():
             error_report = detect_errors(df, file_path, current_sheet)
             trend_summary = compute_trends(df)
            
-            cell_ref = None
-            if re.search(r'formula\s+in\s+cell\s+(\w+\d+)', user_question, re.IGNORECASE):
-                cell_match = re.search(r'(\w+\d+)', user_question, re.IGNORECASE)
-                if cell_match:
-                    cell_ref = cell_match.group(1)
-                    formula = get_formula(file_path, current_sheet, cell_ref)
-                    data_summary += f"\nFormula in cell {cell_ref}: {formula}"
+            data_summary += formula_context(file_path, current_sheet, user_question)
            
             prompt = f"Data from Excel file (sheet: {current_sheet}): {data_summary}\n"
             if error_report != "No obvious errors detected.":
