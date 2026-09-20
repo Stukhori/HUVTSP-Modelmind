@@ -131,3 +131,15 @@ def test_invalid_scope_or_sheet_does_not_call_model(client, monkeypatch):
         {"user_question": "Hello", "analysis_scope": "current", "target_sheet": "Unknown"},
     ):
         assert client.post("/ask_another", data=form).status_code == 302
+
+
+def test_large_workbook_is_rejected_before_model_call(client, monkeypatch):
+    monkeypatch.setattr(modelmind, "call_gemini_api", lambda prompt: pytest.fail("model called"))
+    oversized = BytesIO(b"x" * (15 * 1024 * 1024 + 1))
+    response = client.post(
+        "/upload",
+        data={"excel_file": (oversized, "large.xlsx"), "user_question": "Summarize"},
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    assert b"workbook under 15 MB" in response.data

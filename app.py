@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 import markdown
 import mimetypes
+from werkzeug.exceptions import RequestEntityTooLarge
 mimetypes.init()
 
 
@@ -23,6 +24,7 @@ app.secret_key = os.urandom(24)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'xlsx'}
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.config['MAX_WORKBOOK_BYTES'] = 15 * 1024 * 1024
 app.config['SESSION_PERMANENT'] = False
 
 
@@ -42,6 +44,12 @@ def allowed_file(filename):
     mime_ok = mime_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
    
     return ext_ok and mime_ok
+
+
+@app.errorhandler(RequestEntityTooLarge)
+def workbook_too_large(_error):
+    flash('The upload is too large. Choose an .xlsx workbook under 15 MB.')
+    return redirect(url_for('home'))
 
 
 def detect_errors(df: pd.DataFrame, file_path: str, sheet_name: str) -> str:
@@ -248,6 +256,13 @@ def upload_file():
         # Get detected MIME type for better error message
         mime_type = mimetypes.guess_type(file.filename)[0] or "unknown"
         flash(f'Invalid file format. Detected type: {mime_type}. Please use an .xlsx workbook.')
+        return redirect(url_for('home'))
+
+    file.stream.seek(0, os.SEEK_END)
+    file_size = file.stream.tell()
+    file.stream.seek(0)
+    if file_size > app.config['MAX_WORKBOOK_BYTES']:
+        flash('The workbook is too large. Choose an .xlsx workbook under 15 MB.')
         return redirect(url_for('home'))
 
 

@@ -3,13 +3,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const dropZone = document.querySelector("[data-drop-zone]");
     const fileName = document.querySelector("[data-file-name]");
     const filePrompt = document.querySelector("[data-file-prompt]");
+    const uploadError = document.querySelector("[data-upload-error]");
+    const maxWorkbookBytes = 15 * 1024 * 1024;
 
     const updateFileState = () => {
         if (!fileInput || !fileName) return;
         const file = fileInput.files && fileInput.files[0];
+        let error = "";
+        if (file && !file.name.toLowerCase().endsWith(".xlsx")) error = "Choose an .xlsx workbook.";
+        else if (file && file.size > maxWorkbookBytes) error = "Choose an .xlsx workbook under 15 MB.";
+        fileInput.setCustomValidity(error);
+        if (uploadError) {
+            uploadError.textContent = error;
+            uploadError.hidden = !error;
+        }
         fileName.textContent = file ? file.name : "No file selected";
-        if (filePrompt) filePrompt.textContent = file ? "Workbook ready" : "Drop a workbook here";
-        if (dropZone) dropZone.classList.toggle("has-file", Boolean(file));
+        if (filePrompt) filePrompt.textContent = file && !error ? "Workbook ready" : "Drop a workbook here";
+        if (dropZone) dropZone.classList.toggle("has-file", Boolean(file && !error));
     };
 
     if (fileInput) fileInput.addEventListener("change", updateFileState);
@@ -28,9 +38,12 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
         dropZone.addEventListener("drop", (event) => {
-            if (event.dataTransfer.files.length) {
+            if (event.dataTransfer.files.length === 1) {
                 fileInput.files = event.dataTransfer.files;
                 updateFileState();
+            } else if (uploadError) {
+                uploadError.textContent = "Drop one workbook at a time.";
+                uploadError.hidden = false;
             }
         });
     }

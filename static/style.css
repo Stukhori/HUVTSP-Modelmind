@@ -153,6 +153,8 @@ a { color: inherit; }
 }
 .drop-zone:hover, .drop-zone.is-dragging { border-color: var(--indigo); background: var(--indigo-soft); }
 .drop-zone.has-file { border-style: solid; border-color: var(--mint-dark); background: #effbf7; }
+.field-error { margin:8px 0 0; color:var(--danger); font-size:.85rem; font-weight:700; }
+.field-error[hidden] { display:none; }
 .drop-zone input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .drop-zone:focus-within { outline: 3px solid #f2b84b; outline-offset: 3px; }
 .drop-zone__icon {
